@@ -827,7 +827,25 @@ namespace Facebook
 #if TYPEINFO
                 foreach (var propertyInfo in parameters.GetType().GetTypeInfo().DeclaredProperties.Where(p => p.CanRead))
                 {
-                    dictionary[propertyInfo.Name] = propertyInfo.GetValue(parameters, null);
+                    // DM: GROSS HACK
+                    string propertyName = propertyInfo.Name;
+                    if (propertyName == "explicitly_shared")
+                    {
+                        propertyName = "fb:explicitly_shared";
+                        
+                        // fb:explicitly_shared==false is not a valid value; FB expects it
+                        // to not be referenced at all when it is a non-explicit share
+                        bool flag = (bool)propertyInfo.GetValue(parameters, null);
+                        if (flag == true) 
+                        {
+                            dictionary[propertyName] = propertyInfo.GetValue(parameters, null);
+                        }
+                    }
+                    else
+                    {
+                        dictionary[propertyName] = propertyInfo.GetValue(parameters, null);
+                    }
+                    //...
                 }
 #else
                 foreach (var propertyInfo in parameters.GetType().GetProperties())
